@@ -27,6 +27,7 @@
 #include <linux/interrupt.h>
 #include <linux/bitfield.h>
 #include <linux/log2.h>
+#include <linux/clk.h>
 
 #include "dw3000.h"
 #include "dw3000_core.h"
@@ -3021,6 +3022,21 @@ int dw3000_setup_regulator_delay(struct dw3000 *dw)
 	dev_info(dw->dev, "regulator delay %d us\n", dw3000_regulator_delay_us);
 
 	return 0;
+}
+
+int dw3000_setup_rf_clk(struct dw3000 *dw)
+{
+	struct device_node *node = dw->dev->of_node;
+	struct clk *rf_clk;
+
+	rf_clk = of_clk_get_by_name(node, "rf_clk");
+	if (rf_clk == ERR_PTR(-ENOENT))
+		return 0;
+
+	if (IS_ERR(rf_clk))
+		return PTR_ERR(rf_clk);
+
+	return clk_prepare_enable(rf_clk);
 }
 
 int dw3000_hardreset(struct dw3000 *dw)

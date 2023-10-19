@@ -79,6 +79,11 @@ static int dw3000_spi_probe(struct spi_device *spi)
 	spi_set_drvdata(spi, dw);
 	dw->spi = spi;
 
+	/* Initialization of reference clock source for PLL clock */
+	rc = dw3000_setup_rf_clk(dw);
+	if (rc != 0)
+		goto err_rf_clk;
+
 	/* Initialization of the wifi coex parameters */
 	rc = dw3000_setup_wifi_coex(dw);
 	if (rc != 0)
@@ -219,6 +224,7 @@ err_regulator_delay:
 err_qos_latency:
 err_thread_cpu:
 err_wifi_coex:
+err_rf_clk:
 	dw3000_mcps_free(dw);
 	spi_set_drvdata(spi, NULL);
 err_alloc_hw:

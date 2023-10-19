@@ -300,6 +300,7 @@ int dw3000_setup_wifi_coex(struct dw3000 *dw);
 int dw3000_setup_thread_cpu(struct dw3000 *dw, int *dw3000_thread_cpu);
 int dw3000_setup_qos_latency(struct dw3000 *dw);
 int dw3000_setup_regulator_delay(struct dw3000 *dw);
+int dw3000_setup_rf_clk(struct dw3000 *dw);
 
 void dw3000_spi_queue_start(struct dw3000 *dw);
 int dw3000_spi_queue_flush(struct dw3000 *dw);
