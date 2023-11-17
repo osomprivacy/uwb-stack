@@ -2157,6 +2157,23 @@ static int dw3000_wakeup(struct dw3000 *dw)
 
 	trace_dw3000_wakeup(dw);
 
+	/* Attempt to wake using the wakeup pin if specified. Fall back to using
+	   the master CS line if that fails. */
+	if (gpio_is_valid(dw->wakeup_gpio)) {
+		rc = gpio_direction_output(dw->wakeup_gpio, 1);
+		if (rc) {
+			dev_err(dw->dev, "Could not set wakeup gpio as output\n");
+		} else {
+			/* The wakeup pin (secondary SPI CS line) should be driven
+			   high for 500us to trigger a wake, just like the master CS
+			   line. */
+			usleep_idle_range(DW3000_SPI_CS_WAKEUP_DELAY_US,
+					  DW3000_SPI_CS_WAKEUP_DELAY_US + 100);
+			gpio_direction_output(dw->wakeup_gpio, 0);
+			goto wake_done;
+		}
+	}
+
 	/* Add a delay after transfer. See spi_transfer_delay_exec() called by
 	   spi_transfer_one_message(). */
 #if (KERNEL_VERSION(5, 13, 0) > LINUX_VERSION_CODE)
@@ -2167,18 +2184,19 @@ static int dw3000_wakeup(struct dw3000 *dw)
 #endif
 	/* Now, execute SPI modified message/transfer */
 	rc = dw3000_spi_sync(dw, msg);
-	if (!rc) {
-		/* We are waking up the chip, update state according */
-		dw3000_set_operational_state(dw, DW3000_OP_STATE_WAKE_UP);
-		/* Re-enable spi's irqs. deepsleep disable them */
-		enable_irq(dw->spi->irq);
-	}
 	/* Reset delay in transfer */
 #if (KERNEL_VERSION(5, 13, 0) > LINUX_VERSION_CODE)
 	tr->delay_usecs = 0;
 #else
 	tr->delay.value = 0;
 #endif
+wake_done:
+	if (!rc) {
+		/* We are waking up the chip, update state according */
+		dw3000_set_operational_state(dw, DW3000_OP_STATE_WAKE_UP);
+		/* Re-enable spi's irqs. deepsleep disable them */
+		enable_irq(dw->spi->irq);
+	}
 	return rc;
 	/* The next part of the wake process is located in
 	   dw3000_isr_handle_spi_ready(), executed when SPIRDY interrupt is
@@ -2776,6 +2794,18 @@ int dw3000_setup_reset_gpio(struct dw3000 *dw)
 				     GPIOF_DIR_OUT | GPIOF_OPEN_DRAIN |
 					     GPIOF_INIT_LOW,
 				     "dw3000-reset");
+}
+
+int dw3000_setup_wakeup_gpio(struct dw3000 *dw)
+{
+	/* Optional pin to use for triggering a wake from deep sleep */
+	dw->wakeup_gpio = of_get_named_gpio(dw->dev->of_node, "wakeup-gpio", 0);
+	if (!gpio_is_valid(dw->wakeup_gpio))
+		return 0;
+
+	return devm_gpio_request_one(dw->dev, dw->wakeup_gpio,
+				     GPIOF_DIR_OUT | GPIOF_INIT_LOW,
+				     "dw3000-wakeup");
 }
 
 /**
@@ -4638,7 +4668,8 @@ static int dw3000_setdwstate(struct dw3000 *dw, enum operational_state state)
 		 */
 		rc = dw3000_reg_write8(dw, DW3000_AON_CFG_ID, 0,
 				       DW3000_AON_SLEEP_EN_MASK |
-					       DW3000_AON_WAKE_CSN_MASK);
+					       DW3000_AON_WAKE_CSN_MASK |
+					       DW3000_AON_WAKE_WUP_MASK);
 		if (rc)
 			return rc;
 		/*

@@ -666,6 +666,7 @@ struct dw3000 {
 	bool has_lock_pm;
 	/* Control GPIOs */
 	int reset_gpio;
+	int wakeup_gpio;
 	/* Regulators handler  */
 	struct dw3000_power_control regulators;
 	bool is_powered;

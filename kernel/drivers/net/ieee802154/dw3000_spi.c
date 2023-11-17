@@ -164,6 +164,11 @@ static int dw3000_spi_probe(struct spi_device *spi)
 	if (rc != 0)
 		goto err_setup_gpios;
 
+	/* Mark the wakeup GPIO as invalid if setting it up fails */
+	rc = dw3000_setup_wakeup_gpio(dw);
+	if (WARN_ON(rc != 0))
+		dw->wakeup_gpio = INT_MAX;
+
 	/* Allocate pre-computed SPI messages for fast access some registers */
 	rc = dw3000_transfers_init(dw);
 	if (rc != 0)

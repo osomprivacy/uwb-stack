@@ -295,6 +295,7 @@ int dw3000_check_devid(struct dw3000 *dw);
 
 void dw3000_setup_regulators(struct dw3000 *dw);
 int dw3000_setup_reset_gpio(struct dw3000 *dw);
+int dw3000_setup_wakeup_gpio(struct dw3000 *dw);
 int dw3000_setup_irq(struct dw3000 *dw);
 int dw3000_setup_wifi_coex(struct dw3000 *dw);
 int dw3000_setup_thread_cpu(struct dw3000 *dw, int *dw3000_thread_cpu);
