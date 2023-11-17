@@ -22,6 +22,7 @@
  */
 #include <linux/version.h>
 #include <linux/module.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/spi/spi.h>
 #include <linux/of.h>
 
@@ -149,6 +150,10 @@ static int dw3000_spi_probe(struct spi_device *spi)
 
 	/* Request and setup regulators if availables*/
 	dw3000_setup_regulators(dw);
+
+	/* Configure the default pinctrl state */
+	rc = pinctrl_select_default_state(dw->dev);
+	WARN_ON(rc != 0);
 
 	/* Request and setup the reset GPIO pin */
 	/* This leave the DW3000 in reset state until dw3000_hardreset() put
