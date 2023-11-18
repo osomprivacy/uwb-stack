@@ -2167,8 +2167,8 @@ static int dw3000_wakeup(struct dw3000 *dw)
 			/* The wakeup pin (secondary SPI CS line) should be driven
 			   high for 500us to trigger a wake, just like the master CS
 			   line. */
-			usleep_idle_range(DW3000_SPI_CS_WAKEUP_DELAY_US,
-					  DW3000_SPI_CS_WAKEUP_DELAY_US + 100);
+			usleep_range(DW3000_SPI_CS_WAKEUP_DELAY_US,
+				     DW3000_SPI_CS_WAKEUP_DELAY_US + 100);
 			gpio_direction_output(dw->wakeup_gpio, 0);
 			goto wake_done;
 		}
