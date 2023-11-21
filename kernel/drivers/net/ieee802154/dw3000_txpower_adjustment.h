@@ -28,7 +28,7 @@
 
 static inline int dw3000_set_tx_power_register(struct dw3000 *dw, u32 value)
 {
-	return dw3000_reg_write32(dw, DW3000_TX_POWER_ID, 0, value);
+	return dw3000_reg_write32(dw, DW3000_TX_POWER_ID, 0, 0xffffffff);
 }
 
 int dw3000_adjust_tx_power(struct dw3000 *dw, int payload_bytes);
